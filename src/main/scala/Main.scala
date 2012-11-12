@@ -34,22 +34,32 @@ class Runner(command: String) {
   def stop() = {process.map(_.destroy()); this}
 }
 
+
+
 object Main extends App {
+  if (args.length < 1) {
+    println("specify a command")
+  } else {
+    val runner = new Runner(args.mkString(" ")).start()
+    val taskOnFileChange: () => Any = () => runner.restart()
+    val fm = setupFileMonitor(new Listener(taskOnFileChange))
 
+    try {
+      fm start()
+      println("press enter to terminate")
+      val ln = readLine()
+    } finally {
+      fm.stop()
+      runner.stop()
+    }
+  }
 
+  def setupFileMonitor(listener: FileListener): DefaultFileMonitor = {
     val fsManager = VFS.getManager()
     val watchDir = fsManager.resolveFile(SystemUtils.getUserDir(), ".")
-    val runner = new Runner("unison").start()
-    val taskOnFileChange: () => Any = () => runner.restart()
-    val fm = new DefaultFileMonitor(new Listener(taskOnFileChange))
+    val fm = new DefaultFileMonitor(listener)
     fm setRecursive true
     fm addFile watchDir
-  try {
-    fm start()
-    println("press enter to terminate")
-    val ln = readLine()
-  } finally {
-    fm.stop()
-    runner.stop()
+    fm
   }
 }
