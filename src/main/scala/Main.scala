@@ -4,11 +4,11 @@ import scala.sys.process._
 import org.apache.commons.vfs2._
 import org.apache.commons.vfs2.impl.DefaultFileMonitor
 import org.apache.commons.lang.SystemUtils
+import java.util.Date
 
 class Listener(block:() => Any) extends FileListener {
   override def fileCreated(event: FileChangeEvent) {
-    block()
-    ()
+    doAction
   }
 
   override def fileDeleted(event: FileChangeEvent) {
@@ -21,6 +21,11 @@ class Listener(block:() => Any) extends FileListener {
     ()
   }
 
+  def doAction {
+    block()
+    println("changed: " + new Date)
+    ()
+  }
 }
 
 class Runner(command: String) {
